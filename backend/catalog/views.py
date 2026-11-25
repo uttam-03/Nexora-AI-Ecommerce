@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db import models
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -12,6 +13,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.filter(is_active=True, stock__gte=0).filter(models.Q(seller__isnull=True) | models.Q(seller__is_active=True, seller__seller_approved=True)).select_related("category", "seller").prefetch_related("specifications")
     serializer_class = ProductSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
     lookup_field = "slug"
     lookup_value_regex = r"[-a-zA-Z0-9_]+"
     search_fields = ["name","brand","description","category__name"]
