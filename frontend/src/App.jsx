@@ -71,7 +71,30 @@ function Home(){
  <div className="trust"><span>✓ Secure checkout</span><span>✓ Curated technology products</span><span>✓ Convenient shopping</span><span>✓ AI-powered recommendations</span></div><ProductRow title="Trending Technology" url="/catalog/products/trending/"/><ProductRow title="Deals of the Day" url="/catalog/products/deals/"/><ProductRow title="New Arrivals" url="/catalog/products/new_arrivals/"/><ProductRow title="Picked for You" url="/recommendations/"/></main></>
 }
 
-function Shop(){const [products,setProducts]=useState([]);const [search,setSearch]=useState(new URLSearchParams(location.search).get("search")||"");const [sort,setSort]=useState("relevance");const [loading,setLoading]=useState(true);const [searched,setSearched]=useState(search);const load=async(term=search)=>{setLoading(true);setSearched(term);try{const r=await api.get("/catalog/products/",{params:{search:term,ordering:sort==="price"?"price":sort==="rating"?"-rating":"-created_at"}});setProducts(r.data.results||[])}catch{setProducts([])}finally{setLoading(false)}};useEffect(()=>{const timer=setTimeout(()=>load(search),300);return ()=>clearTimeout(timer)},[search,sort]);return <><Nav/><main className="shop"><div className="shophead"><div><span className="eyebrow">CATALOG</span><h1>All technology products</h1><p>Find the right technology for work, study, creativity and play.</p></div><div className="shopcontrols"><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&load(search)} placeholder="Search products"/><button onClick={()=>load(search)}>Search</button><select value={sort} onChange={e=>setSort(e.target.value)}><option value="relevance">Sort: Relevance</option><option value="price">Price</option><option value="rating">Top rated</option></select></div></div>{loading?<div className="emptyrow">Loading products…</div>:<><div className="grid">{products.map(p=><ProductCard key={p.id} p={p}/>)}</div>{!products.length&&<div className="emptyrow">No products found for “{searched}”. Try another search term.</div>}</>}</main></>}</>}
+function Shop(){
+  const [products,setProducts]=useState([]);
+  const [search,setSearch]=useState(new URLSearchParams(location.search).get("search")||"");
+  const [sort,setSort]=useState("relevance");
+  const [loading,setLoading]=useState(true);
+  const [searched,setSearched]=useState(search);
+  const load=async(term=search)=>{
+    setLoading(true);setSearched(term);
+    try{
+      const r=await api.get("/catalog/products/",{params:{search:term,ordering:sort==="price"?"price":sort==="rating"?"-rating":"-created_at"}});
+      setProducts(r.data.results||[]);
+    }catch{setProducts([])}finally{setLoading(false)}
+  };
+  useEffect(()=>{const timer=setTimeout(()=>load(search),300);return ()=>clearTimeout(timer)},[search,sort]);
+  return <><Nav/><main className="shop">
+    <div className="shophead"><div><span className="eyebrow">CATALOG</span><h1>All technology products</h1><p>Find the right technology for work, study, creativity and play.</p></div>
+      <div className="shopcontrols"><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&load(search)} placeholder="Search products"/><button onClick={()=>load(search)}>Search</button><select value={sort} onChange={e=>setSort(e.target.value)}><option value="relevance">Sort: Relevance</option><option value="price">Price</option><option value="rating">Top rated</option></select></div>
+    </div>
+    {loading?<div className="emptyrow">Loading products…</div>:<>
+      <div className="grid">{products.map(p=><ProductCard key={p.id} p={p}/>)}</div>
+      {!products.length&&<div className="emptyrow">No products found for “{searched}”. Try another search term.</div>}
+    </>}
+  </main></>;
+}
 
 function Assistant(){
  const [message,setMessage]=useState("");const [busy,setBusy]=useState(false);const [messages,setMessages]=useState([{role:"assistant",content:"Hey! 👋 Main Nexora ka shopping assistant hoon. Batao kya dhoondh rahe ho — camera, laptop, phone ya kuch aur? Budget aur use-case bata doge toh main sensible options shortlist karke comparison bhi kar dunga."}]);const [conversation,setConversation]=useState(null);
