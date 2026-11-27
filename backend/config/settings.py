@@ -12,11 +12,9 @@ load_dotenv(BASE_DIR / ".env")
 # =========================================================
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-local-development-only-key")
-DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 if not DEBUG and SECRET_KEY == "django-insecure-local-development-only-key":
     raise RuntimeError("Set DJANGO_SECRET_KEY in production environment variables.")
-if DEBUG and SECRET_KEY == "django-insecure-local-development-only-key":
-    SECRET_KEY = "django-insecure-local-development-only-key-for-local-only"
 
 ALLOWED_HOSTS = [
     x.strip()
