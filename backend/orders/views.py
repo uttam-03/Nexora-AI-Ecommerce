@@ -88,8 +88,9 @@ class PaymentConfigurationView(APIView):
 
 class UTRSubmitView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    @transaction.atomic
     def post(self, request, order_id):
-        order = get_object_or_404(Order, pk=order_id, user=request.user, payment_method="UPI")
+        order = get_object_or_404(Order.objects.select_for_update(), pk=order_id, user=request.user, payment_method="UPI")
         if order.payment_status == "PAID": return Response({"detail":"This order is already marked paid."}, status=400)
         utr = str(request.data.get("utr", "")).strip()
         if not (8 <= len(utr) <= 80) or not utr.isalnum():

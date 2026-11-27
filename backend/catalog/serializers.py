@@ -1,5 +1,6 @@
 import json
 from rest_framework import serializers
+from django.db import transaction
 from .models import Category, Product, ProductSpecification
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -31,6 +32,13 @@ class ProductSerializer(serializers.ModelSerializer):
             except (TypeError, ValueError): raise serializers.ValidationError({"specifications": "Specifications must be valid JSON."})
         return super().to_internal_value(data)
 
+    def validate(self, attrs):
+        price = attrs.get("price", getattr(self.instance, "price", None))
+        discount = attrs.get("discount_price", getattr(self.instance, "discount_price", None))
+        if discount is not None and price is not None and discount >= price:
+            raise serializers.ValidationError({"discount_price": "Discount price must be lower than the regular price."})
+        return attrs
+
     def _save_specs(self, product, specs):
         if specs is None:
             return
@@ -40,12 +48,14 @@ class ProductSerializer(serializers.ModelSerializer):
             for item in specs if item.get("key", "").strip() and item.get("value", "").strip()
         ])
 
+    @transaction.atomic
     def create(self, validated_data):
         specs = validated_data.pop("specifications", [])
         product = super().create(validated_data)
         self._save_specs(product, specs)
         return product
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         specs = validated_data.pop("specifications", None)
         product = super().update(instance, validated_data)
