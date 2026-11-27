@@ -1,5 +1,4 @@
 from django.contrib.auth import authenticate
-from django.db import transaction
 from rest_framework import serializers
 from .models import User, Address, PaymentMethod
 
@@ -34,21 +33,21 @@ class AddressSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         request = self.context.get("request")
         if attrs.get("is_default") and request and request.user.is_authenticated:
-            attrs["_set_default"] = True
+            # Default flag is changed only after serializer validation succeeds (save hook).
+            attrs["_make_default"] = True
         return attrs
-    @transaction.atomic
     def create(self, validated_data):
-        set_default = validated_data.pop("_set_default", False)
-        user = validated_data.get("user") or self.context["request"].user
-        if set_default:
-            Address.objects.filter(user=user).update(is_default=False)
-        return super().create(validated_data)
-    @transaction.atomic
+        make_default = validated_data.pop("_make_default", False)
+        obj = super().create(validated_data)
+        if make_default:
+            Address.objects.filter(user=obj.user).exclude(pk=obj.pk).update(is_default=False)
+        return obj
     def update(self, instance, validated_data):
-        set_default = validated_data.pop("_set_default", False)
-        if set_default:
-            Address.objects.filter(user=instance.user).exclude(pk=instance.pk).update(is_default=False)
-        return super().update(instance, validated_data)
+        make_default = validated_data.pop("_make_default", False)
+        obj = super().update(instance, validated_data)
+        if make_default:
+            Address.objects.filter(user=obj.user).exclude(pk=obj.pk).update(is_default=False)
+        return obj
 
 class PaymentMethodSerializer(serializers.ModelSerializer):
     # Never store full card number or CVV. Only token/last4 should be persisted.
@@ -59,16 +58,18 @@ class PaymentMethodSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs.get("method_type") == "CARD" and len(attrs.get("last4", getattr(self.instance, "last4", ""))) not in (0,4):
             raise serializers.ValidationError({"last4":"Store exactly the last 4 digits only."})
-        if attrs.get("method_type") == "CARD" and (attrs.get("display_name", getattr(self.instance, "display_name", "")) or "").strip() == "":
-            raise serializers.ValidationError({"display_name":"A display name is required."})
+        if attrs.get("is_default"):
+            attrs["_make_default"] = True
         return attrs
-    @transaction.atomic
     def create(self, validated_data):
-        if validated_data.get("is_default"):
-            PaymentMethod.objects.filter(user=self.context["request"].user).update(is_default=False)
-        return super().create(validated_data)
-    @transaction.atomic
+        make_default = validated_data.pop("_make_default", False)
+        obj = super().create(validated_data)
+        if make_default:
+            PaymentMethod.objects.filter(user=obj.user).exclude(pk=obj.pk).update(is_default=False)
+        return obj
     def update(self, instance, validated_data):
-        if validated_data.get("is_default"):
-            PaymentMethod.objects.filter(user=instance.user).exclude(pk=instance.pk).update(is_default=False)
-        return super().update(instance, validated_data)
+        make_default = validated_data.pop("_make_default", False)
+        obj = super().update(instance, validated_data)
+        if make_default:
+            PaymentMethod.objects.filter(user=obj.user).exclude(pk=obj.pk).update(is_default=False)
+        return obj
