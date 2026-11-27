@@ -22,6 +22,10 @@ class User(AbstractUser):
     phone = models.CharField(max_length=20, blank=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     bio = models.TextField(blank=True)
+    address_line = models.CharField(max_length=250, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    postal_code = models.CharField(max_length=20, blank=True)
     seller_approved = models.BooleanField(default=False)
     objects = UserManager()
     def __str__(self): return self.username

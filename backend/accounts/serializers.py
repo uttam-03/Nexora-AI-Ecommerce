@@ -5,7 +5,7 @@ from .models import User, Address, PaymentMethod
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id","username","email","first_name","last_name","role","phone","avatar","bio"]
+        fields = ["id","username","email","first_name","last_name","role","phone","avatar","bio","address_line","city","state","postal_code"]
         read_only_fields = ["id","username","role"]
 
 class RegisterSerializer(serializers.ModelSerializer):
